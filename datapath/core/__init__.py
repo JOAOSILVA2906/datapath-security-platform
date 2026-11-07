@@ -29,6 +29,12 @@ from .ratelimit import (
     RateLimitConfig,
     RateLimiter,
 )
+from .templates import (
+    TemplateManifest,
+    TemplateVerdict,
+    TemplateVetter,
+    VetResult,
+)
 
 __all__ = [
     "Intensity",
@@ -67,4 +73,8 @@ __all__ = [
     "DenyReason",
     "RateLimitConfig",
     "RateLimiter",
+    "TemplateManifest",
+    "TemplateVerdict",
+    "TemplateVetter",
+    "VetResult",
 ]

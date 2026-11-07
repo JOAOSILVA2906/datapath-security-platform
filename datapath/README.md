@@ -22,6 +22,7 @@ permitted, and refuses by default.
 | `core/dualcontrol.py` | review #7 | Two-person approval for sensitive changes (allow-list / policy). |
 | `core/vault.py` | review #7 | Scoped, ephemeral credential leasing; sealed at rest; rotation. |
 | `core/ratelimit.py` | 1.5 | Per-target rate/concurrency, tenant+global budgets, adaptive backpressure. |
+| `core/templates.py` | §7 / review #9 | Scanner-template supply-chain vetting: pinned-by-hash, tag→side-effect, block unmapped/forbidden. |
 
 See also [THREAT-MODEL.md](THREAT-MODEL.md) — the platform's own threat model.
 
