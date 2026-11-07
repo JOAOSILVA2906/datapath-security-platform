@@ -18,6 +18,11 @@ permitted, and refuses by default.
 | `core/policy.py` | 2.2 | The single decision point. **Default-deny, fails closed.** |
 | `core/audit.py` | 1.8 | Append-only, hash-chained audit log (metadata + hashes only — no bodies). |
 | `core/killswitch.py` | 1.7 | Global kill switch, per-scan abort, dead-man's heartbeat. |
+| `core/ownership.py` | 1.6 / review #5 | Classify assets OWNED / THIRD_PARTY / UNVERIFIED via CNAME + ASN/RDAP. |
+| `core/dualcontrol.py` | review #7 | Two-person approval for sensitive changes (allow-list / policy). |
+| `core/vault.py` | review #7 | Scoped, ephemeral credential leasing; sealed at rest; rotation. |
+
+See also [THREAT-MODEL.md](THREAT-MODEL.md) — the platform's own threat model.
 
 ## Design decisions carried over from the spec review (v0.2 fixes)
 

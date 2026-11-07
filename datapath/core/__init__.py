@@ -21,6 +21,8 @@ from .ownership import (
     OwnershipVerifier,
     Verdict,
 )
+from .dualcontrol import ChangeRequest, ChangeStatus, DualControl, DualControlError
+from .vault import CredentialVault, Lease, VaultError
 
 __all__ = [
     "Intensity",
@@ -48,4 +50,11 @@ __all__ = [
     "OwnershipResult",
     "OwnershipVerifier",
     "Verdict",
+    "ChangeRequest",
+    "ChangeStatus",
+    "DualControl",
+    "DualControlError",
+    "CredentialVault",
+    "Lease",
+    "VaultError",
 ]
