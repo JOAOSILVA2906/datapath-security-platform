@@ -109,6 +109,28 @@ Demonstração da Fase 2 (offline):
 python -m datapath.demo_fase2
 ```
 
+## Fase 3 — encadeamento de caminhos de ataque
+
+O pacote `datapath/chain` compõe achados individuais (modelados como
+*capacidades* com pré e pós-condições) em caminhos de ataque realistas até o
+dado sensível. O planejador faz uma busca a partir do privilégio inicial
+(ex.: anônimo) e **prioriza por alcançabilidade** (spec 5.3): o score é o
+produto das alcançabilidades dos passos vezes o impacto, então o relatório é
+guiado por quão realmente alcançável é o dado — não pela mera presença de
+achados. Cada caminho **termina no primeiro limite sensível**.
+
+| Módulo | Seção da spec | Responsabilidade |
+|---|---|---|
+| `chain/capability.py` | 5.1 | Achados como capacidades (requer/concede estado); fábricas a partir de confirmações. |
+| `chain/planner.py` | 5.1 / 5.3 | Busca e ranqueia caminhos; para no limite; narrativa + evidência por passo. |
+
+Demonstração da Fase 3 (offline) — monta `anônimo → enumerar IDs → BOLA →
+registro de outro tenant`:
+
+```
+python -m datapath.demo_fase3
+```
+
 ## Ainda não construído (fases seguintes)
 
 A implementação de rede do proxy de egress, as checagens de dono via
