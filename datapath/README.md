@@ -21,6 +21,7 @@ permitted, and refuses by default.
 | `core/ownership.py` | 1.6 / review #5 | Classify assets OWNED / THIRD_PARTY / UNVERIFIED via CNAME + ASN/RDAP. |
 | `core/dualcontrol.py` | review #7 | Two-person approval for sensitive changes (allow-list / policy). |
 | `core/vault.py` | review #7 | Scoped, ephemeral credential leasing; sealed at rest; rotation. |
+| `core/ratelimit.py` | 1.5 | Per-target rate/concurrency, tenant+global budgets, adaptive backpressure. |
 
 See also [THREAT-MODEL.md](THREAT-MODEL.md) — the platform's own threat model.
 

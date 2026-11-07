@@ -23,6 +23,12 @@ from .ownership import (
 )
 from .dualcontrol import ChangeRequest, ChangeStatus, DualControl, DualControlError
 from .vault import CredentialVault, Lease, VaultError
+from .ratelimit import (
+    Admission,
+    DenyReason,
+    RateLimitConfig,
+    RateLimiter,
+)
 
 __all__ = [
     "Intensity",
@@ -57,4 +63,8 @@ __all__ = [
     "CredentialVault",
     "Lease",
     "VaultError",
+    "Admission",
+    "DenyReason",
+    "RateLimitConfig",
+    "RateLimiter",
 ]
