@@ -93,7 +93,13 @@
   .path-head .pstate { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .05em;
                        background: var(--surface); color: var(--high); border: 1px solid var(--high);
                        border-radius: 999px; padding: 5px 11px; white-space: nowrap; }
+  .path-head .pscore { font-family: var(--font-mono); font-size: .7rem; font-variant-numeric: tabular-nums;
+                       color: var(--high); white-space: nowrap; }
   .path-body { padding: 20px 22px; }
+  .chainmeta { margin: 0 0 14px; font-size: .84rem; color: var(--muted); }
+  .chainmeta b { color: var(--fg); font-variant-numeric: tabular-nums; }
+  .chainnote { margin: 14px 0 0; font-size: .84rem; color: var(--muted); }
+  .chainnote b { color: var(--fg); }
   .steps { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; font-size: .86rem; }
   .step { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
           font-family: var(--font-mono); font-size: .78rem; }
@@ -164,20 +170,27 @@
     <span><i style="background:var(--low)"></i>3 baixos</span>
   </div>
 
-  <p class="section-label">Fase 2 · Caminho de ataque confirmado</p>
+  <p class="section-label">Fases 2 & 3 · Caminho de ataque encadeado e confirmado</p>
 
   <div class="path">
     <div class="path-head">
       <span class="ptitle">Leitura entre tenants (BOLA)</span>
+      <span class="pscore">score 61.6</span>
       <span class="pstate">PAROU NO LIMITE · não explorado</span>
     </div>
     <div class="path-body">
+      <p class="chainmeta">Risco ponderado por alcançabilidade: alcançabilidade
+        <b>0,68</b> × impacto <b>90</b>. Cadeia montada automaticamente a partir dos achados.</p>
       <div class="steps">
-        <span class="step">identidade A (baixo privilégio)</span>
+        <span class="step">anônimo</span>
         <span class="arrow">→</span>
-        <span class="step">referência ao objeto do tenant B</span>
+        <span class="step">mapear superfície</span>
         <span class="arrow">→</span>
-        <span class="step stop">■ limite sensível alcançado</span>
+        <span class="step">enumerar IDs sequenciais</span>
+        <span class="arrow">→</span>
+        <span class="step">BOLA: objeto do tenant B</span>
+        <span class="arrow">→</span>
+        <span class="step stop">■ limite alcançado</span>
       </div>
       <div class="proof">
         <span class="lab">Prova mínima (mascarada)</span>
@@ -189,6 +202,9 @@
         Correção: aplicar verificação de posse do objeto no servidor em toda referência; usar
         identificadores não-enumeráveis; middleware de autorização central com negação por padrão.
       </div>
+      <p class="chainnote">Priorização por alcançabilidade: o achado de <b>CORS isolado</b> foi
+        <b>descartado</b> como caminho — não está numa rota até dado sensível. Foca no que importa,
+        reduz falso-positivo.</p>
     </div>
   </div>
 
