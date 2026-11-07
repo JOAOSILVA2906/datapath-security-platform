@@ -1,0 +1,300 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Relatório de Varredura</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: coluna central; cabeçalho, resumo, destaque da Fase 2 (caminho
+     confirmado), lista de achados agrupados, rodapé. Mesma identidade do portão:
+     neutro ardósia, verde/vermelho semânticos, acento azul-petróleo. */
+  :root {
+    --bg: #eef1f5;
+    --surface: #ffffff;
+    --surface-2: #f6f8fb;
+    --fg: #1b2430;
+    --muted: #5a6778;
+    --line: #dce2ea;
+    --accent: #0d7a74;
+    --crit: #8e1f1a;
+    --high: #b5362f;
+    --med: #9a6a12;
+    --low: #2f6fb0;
+    --ok: #1a7f4b;
+    --ok-bg: #e4f4ea;
+    --high-bg: #fae8e6;
+    --med-bg: #f7eed9;
+    --low-bg: #e6eff8;
+    --shadow: 0 1px 2px rgba(27,36,48,.06), 0 8px 24px rgba(27,36,48,.06);
+    --font-display: "Sora", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1520; --surface: #182233; --surface-2: #121a27;
+      --fg: #e7edf5; --muted: #9aa8bc; --line: #27344a; --accent: #46b8af;
+      --crit: #f0908a; --high: #f08b84; --med: #e4b45f; --low: #76b4ea;
+      --ok: #5cd291; --ok-bg: #163427; --high-bg: #3a1f1d; --med-bg: #352a16;
+      --low-bg: #16293a;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1520; --surface: #182233; --surface-2: #121a27;
+    --fg: #e7edf5; --muted: #9aa8bc; --line: #27344a; --accent: #46b8af;
+    --crit: #f0908a; --high: #f08b84; --med: #e4b45f; --low: #76b4ea;
+    --ok: #5cd291; --ok-bg: #163427; --high-bg: #3a1f1d; --med-bg: #352a16;
+    --low-bg: #16293a;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.55; }
+  .wrap {
+    max-width: 820px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 40px 56px;
+  }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em;
+             text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.5rem, 1.1rem + 2vw, 2.1rem);
+       margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+  .target { font-family: var(--font-mono); font-size: .85rem; color: var(--muted); margin: 10px 0 0; }
+  .tag { display: inline-block; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em;
+         padding: 3px 9px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); margin-left: 4px; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 26px 0 0; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+          padding: 14px 12px; box-shadow: var(--shadow); }
+  .tile .n { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem;
+             font-variant-numeric: tabular-nums; line-height: 1; }
+  .tile .k { color: var(--muted); font-size: .76rem; margin-top: 6px; }
+  .tile.hi .n { color: var(--high); }
+
+  .bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; margin: 18px 0 6px;
+         border: 1px solid var(--line); }
+  .bar span { display: block; }
+  .bar .s-high { background: var(--high); }
+  .bar .s-med { background: var(--med); }
+  .bar .s-low { background: var(--low); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .78rem; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+
+  .section-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em;
+                   text-transform: uppercase; color: var(--muted); margin: 34px 0 12px; }
+
+  /* Destaque Fase 2 */
+  .path { background: var(--surface); border: 1px solid var(--high); border-radius: 16px;
+          box-shadow: var(--shadow); overflow: hidden; }
+  .path-head { background: var(--high-bg); padding: 16px 22px; display: flex; align-items: center;
+               gap: 12px; flex-wrap: wrap; }
+  .path-head .ptitle { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+                       color: var(--high); flex: 1; min-width: 0; }
+  .path-head .pstate { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .05em;
+                       background: var(--surface); color: var(--high); border: 1px solid var(--high);
+                       border-radius: 999px; padding: 5px 11px; white-space: nowrap; }
+  .path-body { padding: 20px 22px; }
+  .steps { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; font-size: .86rem; }
+  .step { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+          font-family: var(--font-mono); font-size: .78rem; }
+  .step.stop { background: var(--high-bg); border-color: var(--high); color: var(--high); font-weight: 600; }
+  .arrow { color: var(--muted); }
+  .proof { background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--high);
+           border-radius: 8px; padding: 13px 16px; font-size: .9rem; }
+  .proof .lab { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+                color: var(--muted); display: block; margin-bottom: 5px; }
+  .proof b { color: var(--fg); }
+
+  /* Achados */
+  .finds { display: flex; flex-direction: column; gap: 12px; }
+  .find { position: relative; background: var(--surface); border: 1px solid var(--line);
+          border-radius: 13px; box-shadow: var(--shadow); padding: 16px 18px 16px 22px; overflow: hidden; }
+  .find::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
+  .find.high::before { background: var(--high); }
+  .find.med::before { background: var(--med); }
+  .find.low::before { background: var(--low); }
+  .find-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .find h3 { font-family: var(--font-display); font-weight: 600; font-size: 1rem; margin: 0; flex: 1; min-width: 0; }
+  .sev { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em; padding: 4px 9px;
+         border-radius: 999px; white-space: nowrap; }
+  .sev.high { background: var(--high-bg); color: var(--high); }
+  .sev.med { background: var(--med-bg); color: var(--med); }
+  .sev.low { background: var(--low-bg); color: var(--low); }
+  .cvss { font-family: var(--font-mono); font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .count { font-family: var(--font-mono); font-size: .7rem; color: var(--muted); }
+  .owasp { font-family: var(--font-mono); font-size: .72rem; color: var(--accent); margin: 8px 0 0; }
+  .fix { margin: 9px 0 0; color: var(--muted); font-size: .88rem; }
+  .fix b { color: var(--fg); font-weight: 600; }
+  .where { margin: 7px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .where code { font-family: var(--font-mono); font-size: .72rem; background: var(--surface-2);
+                border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; color: var(--fg); }
+
+  .note { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+  .note h4 { font-family: var(--font-display); font-size: .95rem; color: var(--fg); margin: 0 0 8px; }
+  .note code { font-family: var(--font-mono); font-size: .8rem; background: var(--surface-2);
+               border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; color: var(--fg); }
+  .note .cmd { display: block; margin: 6px 0 0; }
+
+  @media (max-width: 560px) { .summary { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">DataPath · Relatório de varredura</p>
+    <h1>Alvo de treino — modo seguro + confirmação ativa</h1>
+    <p class="target">https://treino.example.com/ · modo: SEGURO/passivo + confirmação ATIVA (opt-in)
+      <span class="tag">✓ autorizado</span></p>
+  </header>
+
+  <div class="summary">
+    <div class="tile"><div class="n">3</div><div class="k">Páginas visitadas</div></div>
+    <div class="tile"><div class="n">16</div><div class="k">Achados</div></div>
+    <div class="tile hi"><div class="n">1</div><div class="k">Caminho crítico confirmado</div></div>
+    <div class="tile"><div class="n">✓</div><div class="k">Auditoria íntegra</div></div>
+  </div>
+
+  <div class="bar" role="img" aria-label="1 alto, 12 médios, 3 baixos">
+    <span class="s-high" style="width:6.25%"></span>
+    <span class="s-med" style="width:75%"></span>
+    <span class="s-low" style="width:18.75%"></span>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--high)"></i>1 alto</span>
+    <span><i style="background:var(--med)"></i>12 médios</span>
+    <span><i style="background:var(--low)"></i>3 baixos</span>
+  </div>
+
+  <p class="section-label">Fase 2 · Caminho de ataque confirmado</p>
+
+  <div class="path">
+    <div class="path-head">
+      <span class="ptitle">Leitura entre tenants (BOLA)</span>
+      <span class="pstate">PAROU NO LIMITE · não explorado</span>
+    </div>
+    <div class="path-body">
+      <div class="steps">
+        <span class="step">identidade A (baixo privilégio)</span>
+        <span class="arrow">→</span>
+        <span class="step">referência ao objeto do tenant B</span>
+        <span class="arrow">→</span>
+        <span class="step stop">■ limite sensível alcançado</span>
+      </div>
+      <div class="proof">
+        <span class="lab">Prova mínima (mascarada)</span>
+        A identidade A recebeu <b>HTTP 200</b> contendo o marcador de decoy do tenant B
+        (<b>DECO…</b>); <b>1 registro</b> alcançável. O corpo da resposta <b>não foi retido</b>
+        (hash 06fd5a1148d2…). O engine fez <b>1 requisição</b> e parou — sem enumerar, sem puxar o dado.
+        <br><br>
+        <b>A01:2021 — Broken Access Control.</b> Estado: <b>confirmado-alcançável, não-explorado</b>.
+        Correção: aplicar verificação de posse do objeto no servidor em toda referência; usar
+        identificadores não-enumeráveis; middleware de autorização central com negação por padrão.
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Fase 1 · Achados (detecção passiva)</p>
+
+  <div class="finds">
+
+    <article class="find high">
+      <div class="find-top">
+        <h3>CORS permissivo com credenciais</h3>
+        <span class="cvss">CVSS 7.5</span>
+        <span class="sev high">ALTO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <div class="where"><code>/api/v2/users?id=1</code></div>
+      <p class="fix"><b>Risco:</b> qualquer site pode ler respostas autenticadas desta API.
+        <b>Correção:</b> nunca combine origem curinga com credenciais; reflita apenas origens de uma allow-list.</p>
+    </article>
+
+    <article class="find med">
+      <div class="find-top">
+        <h3>Content-Security-Policy ausente</h3>
+        <span class="cvss">CVSS 5.4</span>
+        <span class="count">· 3 locais</span>
+        <span class="sev med">MÉDIO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <div class="where"><code>/</code><code>/login</code><code>/api/v2/users</code></div>
+      <p class="fix"><b>Correção:</b> defina um CSP restritivo (ex.: default-src 'self'; object-src 'none'; frame-ancestors 'none').</p>
+    </article>
+
+    <article class="find med">
+      <div class="find-top">
+        <h3>Mensagem de erro detalhada / stack trace exposta</h3>
+        <span class="cvss">CVSS 5.3</span>
+        <span class="sev med">MÉDIO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <div class="where"><code>/login</code></div>
+      <p class="fix"><b>Correção:</b> desative erros detalhados em produção; retorne uma página genérica e registre o detalhe só internamente.</p>
+    </article>
+
+    <article class="find med">
+      <div class="find-top">
+        <h3>Divulgação de tecnologia/versão em cabeçalhos</h3>
+        <span class="cvss">CVSS 5.3</span>
+        <span class="sev med">MÉDIO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <div class="where"><code>/ (Server, X-Powered-By)</code></div>
+      <p class="fix"><b>Correção:</b> remova ou minimize os cabeçalhos Server / X-Powered-By.</p>
+    </article>
+
+    <article class="find med">
+      <div class="find-top">
+        <h3>Strict-Transport-Security (HSTS) ausente</h3>
+        <span class="cvss">CVSS 4.8</span>
+        <span class="count">· 3 locais</span>
+        <span class="sev med">MÉDIO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <p class="fix"><b>Correção:</b> envie 'Strict-Transport-Security: max-age=31536000; includeSubDomains'.</p>
+    </article>
+
+    <article class="find med">
+      <div class="find-top">
+        <h3>Proteção contra clickjacking ausente</h3>
+        <span class="cvss">CVSS 4.3</span>
+        <span class="count">· 3 locais</span>
+        <span class="sev med">MÉDIO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <p class="fix"><b>Correção:</b> use 'X-Frame-Options: DENY' ou 'frame-ancestors none' no CSP.</p>
+    </article>
+
+    <article class="find med">
+      <div class="find-top">
+        <h3>Cookie de sessão sem atributos de segurança</h3>
+        <span class="cvss">CVSS 4.2</span>
+        <span class="sev med">MÉDIO</span>
+      </div>
+      <p class="owasp">A07:2021 Identification and Authentication Failures</p>
+      <div class="where"><code>/ (cookie "session")</code></div>
+      <p class="fix"><b>Correção:</b> defina os cookies de sessão com Secure, HttpOnly e SameSite.</p>
+    </article>
+
+    <article class="find low">
+      <div class="find-top">
+        <h3>X-Content-Type-Options ausente</h3>
+        <span class="cvss">CVSS 3.1</span>
+        <span class="count">· 3 locais</span>
+        <span class="sev low">BAIXO</span>
+      </div>
+      <p class="owasp">A05:2021 Security Misconfiguration</p>
+      <p class="fix"><b>Correção:</b> envie 'X-Content-Type-Options: nosniff' em todas as respostas.</p>
+    </article>
+
+  </div>
+
+  <div class="note">
+    <h4>Sobre este relatório</h4>
+    <p>Gerado por uma varredura de demonstração contra um alvo de treino simulado. Os endereços e dados
+      são exemplos (os dados "sensíveis" são decoys falsos). A Fase 2 só roda com autorização de modo
+      ativo e confirmação por scan, e <b>para no primeiro limite sensível</b> — prova o risco sem realizar
+      o dano. Para reproduzir:</p>
+    <code class="cmd">python -m datapath.demo_fase1</code>
+    <code class="cmd">python -m datapath.demo_fase2</code>
+  </div>
+</div>
