@@ -1,100 +1,107 @@
-# DataPath Platform Threat Model
+# Modelo de Ameaças da Plataforma DataPath
 
-*Review fix #7. Scope: the security of the DataPath platform itself, not of the
-targets it assesses. Companion to the Phase-0 code in `datapath/core`.*
+*Correção #7 da revisão. Escopo: a segurança da própria plataforma DataPath, e
+não dos alvos que ela avalia. Documento companheiro do código da Fase 0 em
+`datapath/core`.*
 
-The platform is a high-value target in its own right: it holds test credentials
-for many customers, stores the map of how each customer reaches their data, and
-controls a fleet that can send traffic to those customers' assets. A compromise
-here is a compromise of every customer at once. This document enumerates the
-assets, the adversaries, the threats (STRIDE), and the controls — marking which
-are implemented in Phase 0 and which are still owed.
+A plataforma é, ela mesma, um alvo de alto valor: guarda credenciais de teste de
+muitos clientes, armazena o mapa de como cada cliente chega aos seus dados, e
+controla uma frota que pode enviar tráfego aos ativos desses clientes. Um
+comprometimento aqui é o comprometimento de todos os clientes de uma vez. Este
+documento lista os ativos, os adversários, as ameaças (STRIDE) e os controles —
+marcando o que já está na Fase 0 e o que ainda falta.
 
-## 1. Assets to protect
+## 1. Ativos a proteger
 
-| Asset | Why it matters |
+| Ativo | Por que importa |
 |---|---|
-| Customer test credentials | Direct access to customer systems if leaked. |
-| Scope / data-path graphs | A blueprint of how to reach each customer's data. |
-| Authorization grants & signing keys | Forging one authorizes unauthorized testing. |
-| Allow-lists & policy rules | Widening one turns the fleet on out-of-scope assets. |
-| Audit log | Its integrity is the platform's legal defence. |
-| Egress fleet | Could be abused as an attack proxy against third parties. |
+| Credenciais de teste dos clientes | Acesso direto aos sistemas do cliente se vazarem. |
+| Grafos de escopo / caminho-de-dados | Um mapa de como chegar aos dados de cada cliente. |
+| Autorizações e chaves de assinatura | Forjar uma autoriza testes não autorizados. |
+| Allow-lists e regras de política | Afrouxar uma aponta a frota a ativos fora de escopo. |
+| Log de auditoria | Sua integridade é a defesa legal da plataforma. |
+| Frota de egress | Poderia ser abusada como proxy de ataque contra terceiros. |
 
-## 2. Adversaries
+## 2. Adversários
 
-- **Malicious or compromised operator (insider).** Primary threat. Has some
-  legitimate access and wants to widen scope, exfiltrate credentials, or point
-  the fleet at a target they don't own.
-- **Malicious customer.** Tries to aim the platform at assets they don't
-  control (a competitor, a shared host) by faking authorization.
-- **External attacker.** Targets the platform's own APIs/infra to steal the
-  assets above.
-- **Supply-chain adversary.** Ships a malicious check plugin or scanner
-  template (e.g. a Nuclei template tagged `intrusive`/`dos`).
+- **Operador malicioso ou comprometido (ameaça interna).** Ameaça principal.
+  Tem algum acesso legítimo e quer ampliar o escopo, exfiltrar credenciais, ou
+  apontar a frota para um alvo que não é dele.
+- **Cliente malicioso.** Tenta mirar a plataforma em ativos que não controla (um
+  concorrente, um host compartilhado) forjando a autorização.
+- **Atacante externo.** Mira a infraestrutura/APIs da própria plataforma para
+  roubar os ativos acima.
+- **Adversário da cadeia de suprimento.** Entrega um plugin de check malicioso
+  ou um template de scanner (ex.: um template Nuclei marcado como
+  `intrusive`/`dos`).
 
-## 3. Threats and controls (STRIDE)
+## 3. Ameaças e controles (STRIDE)
 
-### Spoofing
-- *Forged authorization grant.* → Grants are HMAC-signed and bound to a scope
-  version; `AuthorizationGrant.signature_valid` / `is_valid_for`. **(Phase 0)**
-- *Customer claims assets they don't own.* → Ownership verification: CNAME/ASN
-  checks, third-party/CDN exclusion; `OwnershipVerifier`. **(Phase 0)**
+### Spoofing (falsificação de identidade)
+- *Autorização forjada.* → Autorizações são assinadas com HMAC e vinculadas a
+  uma versão de escopo; `AuthorizationGrant.signature_valid` / `is_valid_for`.
+  **(Fase 0)**
+- *Cliente alega ativos que não possui.* → Verificação de dono: checagens de
+  CNAME/ASN, exclusão de terceiros/CDN; `OwnershipVerifier`. **(Fase 0)**
 
-### Tampering
-- *Audit-log edits to hide activity.* → Hash-chained append-only log;
-  `AuditLog.verify` locates the first broken record. **(Phase 0)**
-- *Secret store tampering.* → Sealed blobs are integrity-checked on unseal;
-  `CredentialVault` / sealer tag check. **(Phase 0)**
+### Tampering (adulteração)
+- *Edições no log para esconder atividade.* → Log em cadeia de hashes, só
+  acréscimo; `AuditLog.verify` localiza o primeiro registro quebrado. **(Fase 0)**
+- *Adulteração do armazenamento de segredos.* → Blobs selados têm integridade
+  verificada ao abrir; `CredentialVault` / checagem de tag do sealer. **(Fase 0)**
 
-### Repudiation
-- *"We never authorized / ran that."* → Every policy decision and grant event
-  is written to the chained audit log with scope ref, grant id, target, mode.
-  **(Phase 0)**
+### Repudiation (repúdio)
+- *"Nunca autorizamos / rodamos isso."* → Toda decisão de política e evento de
+  autorização é escrito no log encadeado com referência de escopo, id da
+  autorização, alvo e modo. **(Fase 0)**
 
-### Information disclosure
-- *Credential leak via logs.* → Vault never returns secrets to logs; only a
-  salted fingerprint is loggable; secrets excluded from `repr`. Audit log
-  refuses body-like payloads. **(Phase 0)**
-- *PII in evidence/audit.* → Audit stores metadata + hashes only; evidence
-  bodies live in a separate, erasable, encrypted store (GDPR erasure). **(Phase 0
-  for audit; evidence store is a later phase.)**
+### Information disclosure (vazamento de informação)
+- *Vazamento de credencial via logs.* → O cofre nunca devolve segredos para
+  logs; só um fingerprint salgado é registrável; segredos excluídos do `repr`.
+  O log de auditoria recusa payloads que pareçam corpos. **(Fase 0)**
+- *Dados pessoais em evidência/auditoria.* → A auditoria guarda só metadados +
+  hashes; os corpos das evidências ficam num armazenamento separado, apagável e
+  criptografado (direito de exclusão da GDPR). **(Fase 0 para a auditoria; o
+  armazenamento de evidências é de uma fase posterior.)**
 
-### Denial of service
-- *Fleet abused to flood a target, or one tenant starves the fleet.* →
-  Per-target rate caps, per-tenant budgets, adaptive backoff (spec 1.5).
-  **(Owed — not in Phase 0.)**
+### Denial of service (negação de serviço)
+- *Frota abusada para inundar um alvo, ou um tenant sufoca a frota.* → Limites de
+  taxa por alvo, budgets por tenant, backoff adaptativo (spec 1.5). **(Fase 0)**
 
-### Elevation of privilege
-- *One operator widens scope/policy alone.* → Two-person control on sensitive
-  changes (allow-list add, policy relax, intensity raise, ownership override);
-  `DualControl` refuses self-approval and duplicate approvals. **(Phase 0)**
-- *Policy service unreachable → open.* → Policy engine fails **closed**: any
-  error or missing input yields DENY; `PolicyEngine.evaluate`. **(Phase 0)**
+### Elevation of privilege (elevação de privilégio)
+- *Um operador amplia escopo/política sozinho.* → Controle por duas pessoas em
+  mudanças sensíveis (adicionar à allow-list, afrouxar política, subir
+  intensidade, sobrepor veredito de dono); `DualControl` recusa auto-aprovação e
+  aprovações duplicadas. **(Fase 0)**
+- *Serviço de política indisponível → libera.* → O motor de política falha
+  **fechado**: qualquer erro ou entrada faltando resulta em NEGADO;
+  `PolicyEngine.evaluate`. **(Fase 0)**
 
-## 4. Kill switch over in-flight work
+## 4. Botão de parada sobre trabalho em andamento
 
-The kill switch is authoritative over work already in progress, not just the
-queue. The egress gateway must call `KillSwitch.scan_may_probe` (or the policy
-engine, which calls it first) **immediately before every connect**. A global
-halt or a per-scan abort therefore denies the very next request of a scan that
-was mid-pipeline — the request already planned does not complete. A lost
-heartbeat pauses the scan the same way (dead-man's switch). **(Phase 0)**
+O botão de parada é autoritativo sobre o trabalho já em andamento, não só sobre
+a fila. O gateway de egress precisa chamar `KillSwitch.scan_may_probe` (ou o
+motor de política, que o chama primeiro) **imediatamente antes de cada
+conexão**. Assim, uma parada global ou um abort de um scan nega a próxima
+requisição de um scan que estava no meio do processo — a requisição já planejada
+não se completa. A perda do heartbeat pausa o scan da mesma forma (dead-man's
+switch). **(Fase 0)**
 
-## 5. Credential handling rules (enforced by `CredentialVault`)
+## 5. Regras de manuseio de credenciais (impostas pelo `CredentialVault`)
 
-1. Secrets are sealed at rest by an injected KMS/HSM-backed sealer. The bundled
-   `_DevSealer` is labelled dev-only and must not reach production.
-2. Secrets are **leased per scan** with a short TTL, never handed out wholesale.
-3. Leases are revoked on scan end/abort (`revoke_scan`) and on rotation.
-4. Rotation invalidates every outstanding lease for that credential.
-5. Only a salted fingerprint of a secret may be logged.
+1. Segredos são selados em repouso por um sealer injetado (apoiado em KMS/HSM). O
+   `_DevSealer` embutido é rotulado como só-para-dev e não pode ir a produção.
+2. Segredos são **emprestados por scan** com TTL curto, nunca entregues inteiros.
+3. Empréstimos são revogados no fim/abort do scan (`revoke_scan`) e na rotação.
+4. A rotação invalida todo empréstimo pendente daquela credencial.
+5. Só um fingerprint salgado de um segredo pode ser registrado em log.
 
-## 6. Still owed (not in Phase 0)
+## 6. Ainda falta (não está na Fase 0)
 
-- Rate-limit / budget / backpressure engine (spec 1.5) — the DoS controls above.
-- Plugin & template supply-chain vetting (review fix #9): pin a vetted template
-  set, map tags to the side-effect taxonomy, block unmapped templates.
-- Real envelope encryption / KMS integration behind the `Sealer` interface.
-- Per-tenant isolation and encryption-at-rest for the graph and evidence stores.
-- Third-party pentest + SOC 2 / ISO 27001 of the platform (spec Phase 5).
+- Vetação de plugins/templates em produção (revisão #9): já há o `TemplateVetter`
+  no núcleo; falta ligá-lo ao pipeline real de ingestão do feed.
+- Criptografia de envelope real / integração com KMS por trás da interface
+  `Sealer`.
+- Isolamento por tenant e criptografia em repouso dos armazenamentos de grafo e
+  de evidências.
+- Pentest de terceiros + SOC 2 / ISO 27001 da plataforma (Fase 5 da spec).

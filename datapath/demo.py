@@ -69,9 +69,22 @@ def main() -> None:
     }.get(h, [])
     allow = AllowList(scope, resolver)
 
-    print("== DataPath Phase-0 gate demo ==\n")
+    # Tradução dos nomes das verificações internas para exibição.
+    nomes_pt = {
+        "kill_switch": "botão-de-parada",
+        "grant_valid": "autorização-válida",
+        "test_window": "janela-de-tempo",
+        "intensity_ceiling": "teto-de-intensidade",
+        "side_effect_class": "classe-de-efeito",
+        "target_in_scope": "alvo-em-escopo",
+    }
 
-    # 1. Allowed passive probe.
+    def decisao_pt(valor: str) -> str:
+        return {"allow": "PERMITIDO", "deny": "NEGADO"}.get(valor, valor.upper())
+
+    print("== Demonstração do portão da Fase 0 do DataPath ==\n")
+
+    # 1. Sondagem passiva permitida.
     target = allow.resolve("https://api.example.com/v2/search?q=1")
     res = engine.evaluate(
         PolicyInput(
@@ -81,10 +94,11 @@ def main() -> None:
             scan_id="scan-demo", at=NOW,
         )
     )
-    print(f"[1] passive, in-scope, in-window -> {res.decision.value.upper()} "
-          f"(checks: {', '.join(res.checks)})")
+    verificacoes = ", ".join(nomes_pt.get(c, c) for c in res.checks)
+    print(f"[1] passiva, em escopo, na janela -> {decisao_pt(res.decision.value)} "
+          f"(verificações: {verificacoes})")
 
-    # 2. ACTIVE requested but scope ceiling is SAFE.
+    # 2. Pediu modo ATIVO, mas o teto do escopo é SEGURO.
     res = engine.evaluate(
         PolicyInput(
             scope=scope, grant=grant, target=target,
@@ -93,22 +107,25 @@ def main() -> None:
             scan_id="scan-demo", at=NOW,
         )
     )
-    print(f"[2] active over SAFE ceiling      -> {res.decision.value.upper()} "
-          f"({res.reason})")
+    print(f"[2] ativo acima do teto SEGURO    -> {decisao_pt(res.decision.value)} "
+          f"(intensidade pedida excede o teto do escopo)")
 
-    # 3. SSRF: host resolves to cloud metadata.
+    # 3. SSRF: o host resolve para metadados de nuvem.
     try:
         allow.resolve("https://internal.example.com/")
-    except ResolutionError as e:
-        print(f"[3] host -> 169.254.169.254       -> REFUSED ({e})")
+    except ResolutionError:
+        print("[3] host -> 169.254.169.254       -> RECUSADO "
+              "(endereço bloqueado: faixa protegida contra SSRF, "
+              "não é um ativo interno em escopo)")
 
-    # 4. Out-of-scope redirect target.
+    # 4. Alvo de redirecionamento fora do escopo.
     try:
         allow.resolve("https://evil.example.net/v2/")
-    except ResolutionError as e:
-        print(f"[4] off-scope redirect            -> REFUSED ({e})")
+    except ResolutionError:
+        print("[4] redirect fora de escopo       -> RECUSADO "
+              "(url não está no escopo)")
 
-    # 5. Kill switch engaged mid-scan.
+    # 5. Botão de parada acionado no meio do scan.
     ks.abort("scan-demo")
     res = engine.evaluate(
         PolicyInput(
@@ -118,12 +135,12 @@ def main() -> None:
             scan_id="scan-demo", at=NOW,
         )
     )
-    print(f"[5] after per-scan abort          -> {res.decision.value.upper()} "
-          f"({res.reason})")
+    print(f"[5] após abortar o scan           -> {decisao_pt(res.decision.value)} "
+          f"(scan não está em execução: abortado/pausado/desconhecido)")
 
     ok, bad = audit.verify()
-    print(f"\naudit chain: {'INTACT' if ok else f'BROKEN at seq {bad}'} "
-          f"({len(audit)} records)")
+    estado = "ÍNTEGRA" if ok else f"QUEBRADA no registro {bad}"
+    print(f"\ncadeia de auditoria: {estado} ({len(audit)} registros)")
 
 
 if __name__ == "__main__":
