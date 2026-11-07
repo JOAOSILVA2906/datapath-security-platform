@@ -131,6 +131,31 @@ registro de outro tenant`:
 python -m datapath.demo_fase3
 ```
 
+## Fase 4 — ciclo de correção (o "fix")
+
+O pacote `datapath/remediate` transforma achados em ação. Chamadas de rede ficam
+nas camadas de integração; tudo aqui é puro/injetado.
+
+| Módulo | Seção da spec | Responsabilidade |
+|---|---|---|
+| `remediate/tickets.py` | 6.2 | Tickets para GitHub/GitLab e Jira (payloads estruturados). |
+| `remediate/sarif.py` | 6.3 | Export SARIF v2.1.0 (code scanning / IDE), com CVSS. |
+| `remediate/attestation.py` | 6.2 | Reteste de um clique + atestado "corrigido" assinado (cobre só a verificação reexecutada). |
+| `remediate/posture.py` | 6.2 | Tendência/postura: tempo até corrigir, classes recorrentes, abertos ao longo do tempo. |
+| `remediate/notify.py` | 6.2 | Notificação webhook/Slack (sender injetado). |
+
+Demonstração da Fase 4 (offline):
+
+```
+python -m datapath.demo_fase4
+```
+
+## Fase 5 — escala e garantia
+
+Majoritariamente organizacional (endurecimento multi-tenant, pentest de
+terceiros da plataforma, SOC 2 / ISO 27001, monitoramento contínuo). É um plano
+e lista de verificação, não código: veja [FASE5-GARANTIA.md](FASE5-GARANTIA.md).
+
 ## Ainda não construído (fases seguintes)
 
 A implementação de rede do proxy de egress, as checagens de dono via
