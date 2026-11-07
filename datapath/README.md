@@ -87,6 +87,28 @@ Demonstração da Fase 1 (offline, contra um alvo de treino simulado):
 python -m datapath.demo_fase1
 ```
 
+## Fase 2 — confirmação ativa (opt-in) com parada no limite sensível
+
+O pacote `datapath/confirm` faz a confirmação ativa das classes de maior valor
+(BOLA / quebra de controle de acesso, privilégio vertical). É **opt-in**: exige
+que o escopo e a autorização permitam o modo ATIVO **e** uma confirmação por
+scan. Cada confirmador envia **uma** requisição só-leitura e **para no primeiro
+limite sensível** (spec 5.2): captura uma prova mínima mascarada de que o limite
+era *alcançável*, marca `confirmado-alcançável, não-explorado`, e **não puxa o
+dado**. Trabalha contra tenants de teste com dados DECOY (falsos), e o corpo da
+resposta é **descartado no portão** — impossível exfiltrar.
+
+| Módulo | Seção da spec | Responsabilidade |
+|---|---|---|
+| `confirm/boundary.py` | 5.2 | O modelo de limite sensível e a prova mínima mascarada (invariante: nunca explorado). |
+| `confirm/active.py` | 4 / Fase 2 | Confirmadores ativos: BOLA entre tenants e privilégio vertical. |
+
+Demonstração da Fase 2 (offline):
+
+```
+python -m datapath.demo_fase2
+```
+
 ## Ainda não construído (fases seguintes)
 
 A implementação de rede do proxy de egress, as checagens de dono via

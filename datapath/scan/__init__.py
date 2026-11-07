@@ -8,7 +8,7 @@ SAFE/PASSIVE only — read-only GETs, no crafted input, no exploitation.
 
 from .findings import Finding, Severity, cvss31_base
 from .graph import DataPathGraph, EdgeKind, Node, NodeKind
-from .egress import EgressDenied, GatedEgress, HttpResponse
+from .egress import EgressDenied, GatedEgress, HttpResponse, ReducedResponse
 from .detectors import run_all
 from .recon import Recon, ReconResult
 from .ingest import ingest_openapi
@@ -25,6 +25,7 @@ __all__ = [
     "EgressDenied",
     "GatedEgress",
     "HttpResponse",
+    "ReducedResponse",
     "run_all",
     "Recon",
     "ReconResult",
