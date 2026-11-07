@@ -1,0 +1,256 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Portão de Segurança</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: coluna central única; cabeçalho + resumo + lista de 5 casos + rodapé.
+     Cor: neutro ardósia frio, com verde (permitir) e vermelho (barrar) semânticos
+     e um acento azul-petróleo de confiança. */
+  :root {
+    --bg: #eef1f5;
+    --surface: #ffffff;
+    --surface-2: #f6f8fb;
+    --fg: #1b2430;
+    --muted: #5a6778;
+    --line: #dce2ea;
+    --accent: #0d7a74;
+    --ok: #1a7f4b;
+    --ok-bg: #e4f4ea;
+    --block: #b5362f;
+    --block-bg: #fae8e6;
+    --warn: #9a6a12;
+    --warn-bg: #f7eed9;
+    --shadow: 0 1px 2px rgba(27,36,48,.06), 0 8px 24px rgba(27,36,48,.06);
+    --font-display: "Sora", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1520;
+      --surface: #182233;
+      --surface-2: #121a27;
+      --fg: #e7edf5;
+      --muted: #9aa8bc;
+      --line: #27344a;
+      --accent: #46b8af;
+      --ok: #5cd291;
+      --ok-bg: #163427;
+      --block: #f08b84;
+      --block-bg: #3a1f1d;
+      --warn: #e4b45f;
+      --warn-bg: #352a16;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1520;
+    --surface: #182233;
+    --surface-2: #121a27;
+    --fg: #e7edf5;
+    --muted: #9aa8bc;
+    --line: #27344a;
+    --accent: #46b8af;
+    --ok: #5cd291;
+    --ok-bg: #163427;
+    --block: #f08b84;
+    --block-bg: #3a1f1d;
+    --warn: #e4b45f;
+    --warn-bg: #352a16;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.55; }
+  .wrap {
+    max-width: 780px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 40px 56px;
+  }
+
+  /* Cabeçalho */
+  .head { display: flex; gap: 16px; align-items: flex-start; }
+  .shield { flex: none; width: 46px; height: 46px; color: var(--accent); }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.5rem, 1.1rem + 2vw, 2.1rem);
+       margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em;
+             text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  .lede { color: var(--muted); margin: 10px 0 0; max-width: 60ch; }
+
+  /* Resumo em tiles */
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 28px 0 8px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+          padding: 14px 12px; box-shadow: var(--shadow); }
+  .tile .n { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem;
+             font-variant-numeric: tabular-nums; line-height: 1; }
+  .tile .k { color: var(--muted); font-size: .78rem; margin-top: 6px; }
+  .tile.ok .n { color: var(--ok); }
+  .tile.block .n { color: var(--block); }
+
+  .section-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em;
+                   text-transform: uppercase; color: var(--muted); margin: 30px 0 12px; }
+
+  /* Casos */
+  .cases { display: flex; flex-direction: column; gap: 14px; }
+  .case { position: relative; background: var(--surface); border: 1px solid var(--line);
+          border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .case::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; }
+  .case.ok::before { background: var(--ok); }
+  .case.block::before { background: var(--block); }
+  .case-inner { padding: 18px 20px 18px 24px; }
+  .case-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .idx { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); }
+  .case h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.05rem;
+             margin: 0; flex: 1; min-width: 0; letter-spacing: -.01em; }
+  .pill { font-family: var(--font-mono); font-weight: 500; font-size: .72rem; letter-spacing: .06em;
+          padding: 5px 11px; border-radius: 999px; white-space: nowrap; }
+  .pill.ok { background: var(--ok-bg); color: var(--ok); }
+  .pill.block { background: var(--block-bg); color: var(--block); }
+  .detail { font-family: var(--font-mono); font-size: .82rem; color: var(--fg);
+            background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px;
+            padding: 8px 11px; margin: 13px 0 0; overflow-x: auto; white-space: nowrap; }
+  .why { margin: 12px 0 0; color: var(--muted); font-size: .92rem; }
+  .why b { color: var(--fg); font-weight: 600; }
+  .checks { display: flex; flex-wrap: wrap; gap: 6px; margin: 13px 0 0; }
+  .chk { font-family: var(--font-mono); font-size: .68rem; color: var(--ok);
+         background: var(--ok-bg); border-radius: 6px; padding: 4px 8px; }
+
+  /* Rodapé: auditoria + como usar */
+  .audit { display: flex; align-items: center; gap: 13px; margin-top: 16px;
+           background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+           padding: 16px 20px; box-shadow: var(--shadow); }
+  .audit .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--ok);
+                box-shadow: 0 0 0 4px var(--ok-bg); }
+  .audit .t { font-weight: 600; }
+  .audit .s { color: var(--muted); font-size: .88rem; }
+  .note { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
+  .note h4 { font-family: var(--font-display); font-size: .95rem; color: var(--fg); margin: 0 0 8px; }
+  .note code { font-family: var(--font-mono); font-size: .82rem; background: var(--surface-2);
+               border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; color: var(--fg); }
+  .note .cmd { display: block; margin: 7px 0 0; }
+
+  @media (max-width: 560px) {
+    .summary { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <svg class="shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2 4 5v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V5l-8-3Z"/>
+      <path d="m9 12 2 2 4-4"/>
+    </svg>
+    <div>
+      <p class="eyebrow">DataPath · Fase 0</p>
+      <h1>O portão de segurança em ação</h1>
+      <p class="lede">Antes de testar o sistema de um cliente, a plataforma confere a autorização.
+        Aqui estão 5 pedidos que o porteiro analisou. Só o pedido legítimo passou; os outros quatro
+        foram barrados — e tudo ficou registrado.</p>
+    </div>
+  </header>
+
+  <div class="summary">
+    <div class="tile"><div class="n">5</div><div class="k">Pedidos analisados</div></div>
+    <div class="tile ok"><div class="n">1</div><div class="k">Permitido</div></div>
+    <div class="tile block"><div class="n">4</div><div class="k">Barrados</div></div>
+    <div class="tile ok"><div class="n">✓</div><div class="k">Auditoria íntegra</div></div>
+  </div>
+
+  <p class="section-label">Os cinco pedidos</p>
+
+  <div class="cases">
+
+    <article class="case ok">
+      <div class="case-inner">
+        <div class="case-top">
+          <span class="idx">01</span>
+          <h3>Teste normal e autorizado</h3>
+          <span class="pill ok">PERMITIDO</span>
+        </div>
+        <div class="detail">GET https://api.example.com/v2/search · modo seguro</div>
+        <p class="why">Está <b>dentro da lista de permissões</b>, <b>no horário autorizado</b> e
+          <b>no nível que o cliente liberou</b>. O porteiro conferiu as 6 verificações e deixou passar.</p>
+        <div class="checks">
+          <span class="chk">botão-de-parada</span>
+          <span class="chk">autorização-válida</span>
+          <span class="chk">janela-de-tempo</span>
+          <span class="chk">teto-de-intensidade</span>
+          <span class="chk">classe-de-efeito</span>
+          <span class="chk">alvo-em-escopo</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="case block">
+      <div class="case-inner">
+        <div class="case-top">
+          <span class="idx">02</span>
+          <h3>Pediu um teste mais agressivo do que o permitido</h3>
+          <span class="pill block">NEGADO</span>
+        </div>
+        <div class="detail">modo ATIVO pedido · teto do cliente = SEGURO</div>
+        <p class="why">O cliente só autorizou o nível <b>seguro</b>. O pedido veio no nível <b>ativo</b>
+          (mais intrusivo), então o porteiro barrou por <b>exceder o limite autorizado</b>.</p>
+      </div>
+    </article>
+
+    <article class="case block">
+      <div class="case-inner">
+        <div class="case-top">
+          <span class="idx">03</span>
+          <h3>Tentou acessar um endereço interno da nuvem</h3>
+          <span class="pill block">RECUSADO</span>
+        </div>
+        <div class="detail">internal.example.com → 169.254.169.254</div>
+        <p class="why">Esse endereço é um <b>alvo clássico de ataque</b> (o "cofre interno" da nuvem).
+          Fica numa <b>faixa protegida</b> e não é um ativo interno em escopo, então foi bloqueado na hora.
+          É a proteção chamada <b>SSRF</b>.</p>
+      </div>
+    </article>
+
+    <article class="case block">
+      <div class="case-inner">
+        <div class="case-top">
+          <span class="idx">04</span>
+          <h3>Um link tentou desviar o teste para fora da lista</h3>
+          <span class="pill block">RECUSADO</span>
+        </div>
+        <div class="detail">https://evil.example.net/v2/</div>
+        <p class="why">Esse domínio <b>não está no escopo autorizado</b>. Mesmo seguindo um link que apareceu
+          durante o teste, o porteiro confere o destino <b>na hora de conectar</b> e descarta o que está fora.</p>
+      </div>
+    </article>
+
+    <article class="case block">
+      <div class="case-inner">
+        <div class="case-top">
+          <span class="idx">05</span>
+          <h3>Botão de parada acionado no meio do teste</h3>
+          <span class="pill block">NEGADO</span>
+        </div>
+        <div class="detail">scan-demo · abortado</div>
+        <p class="why">Simulamos apertar o <b>botão de parada</b>. A próxima tentativa foi
+          <b>negada imediatamente</b> — provando que dá para interromper tudo na hora, mesmo com um teste em andamento.</p>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="audit">
+    <span class="dot" aria-hidden="true"></span>
+    <div>
+      <div class="t">Cadeia de auditoria: íntegra</div>
+      <div class="s">3 registros gravados — à prova de adulteração. Qualquer alteração seria detectada.</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <h4>O que é isto</h4>
+    <p>Uma demonstração da camada de autorização do DataPath (a "portaria"). Os endereços são exemplos.
+      Nenhum sistema real é testado aqui — esta parte só decide o que <i>seria</i> permitido, e nega o resto.
+      Para ver no seu computador, rode na pasta do projeto:</p>
+    <code class="cmd">python -m datapath.demo</code>
+  </div>
+</div>

@@ -61,6 +61,32 @@ de política são escritas na cadeia de auditoria, que o `verify()` confirma est
 python -m datapath.demo
 ```
 
+## Fase 1 — recon seguro + detecção + relatório
+
+O pacote `datapath/scan` faz o mapeamento de superfície passivo, a detecção
+(só-leitura) e o relatório. **Toda requisição passa pelo portão da Fase 0**: a
+`GatedEgress` só envia um GET depois que a política (nega por padrão) e a
+allow-list (resolve-e-fixa, anti-SSRF) aprovam, limitado pelo rate-limiter e
+pelo botão de parada. É só modo SEGURO/PASSIVO — nada de entrada manipulada nem
+exploração.
+
+| Módulo | Seção da spec | Responsabilidade |
+|---|---|---|
+| `scan/egress.py` | 1.3 / 2.2 | Egress HTTP com portão: política + allow-list + rate-limit + auditoria antes de cada requisição. Transporte injetado. |
+| `scan/graph.py` | 3.2 | O grafo de caminho-de-dados (páginas, APIs, parâmetros, lojas de dados). |
+| `scan/recon.py` | 3.1 | Mapeamento passivo: visita páginas em escopo, extrai links/APIs, roda os detectores. |
+| `scan/detectors.py` | 4 | Detectores passivos: cabeçalhos de segurança, CORS, erros detalhados, listagem de diretório, cookies, fingerprint. |
+| `scan/findings.py` | 6.1 | Modelo de achado + cálculo correto de CVSS v3.1. |
+| `scan/ingest.py` | 3.3 | Ingestão de OpenAPI (contexto do cliente) para o grafo. |
+| `scan/report.py` | 6.3 | Relatório em JSON, ordenado por severidade. |
+| `scan/transport.py` | — | O único ponto que toca a rede de verdade; conduzido só pela `GatedEgress`. |
+
+Demonstração da Fase 1 (offline, contra um alvo de treino simulado):
+
+```
+python -m datapath.demo_fase1
+```
+
 ## Ainda não construído (fases seguintes)
 
 A implementação de rede do proxy de egress, as checagens de dono via
