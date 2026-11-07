@@ -15,6 +15,12 @@ from .allowlist import AllowList, ResolvedTarget, ResolutionError
 from .policy import Decision, PolicyEngine, PolicyInput, PolicyResult
 from .audit import AuditLog, AuditRecord
 from .killswitch import KillSwitch, ScanState
+from .ownership import (
+    IpOwner,
+    OwnershipResult,
+    OwnershipVerifier,
+    Verdict,
+)
 
 __all__ = [
     "Intensity",
@@ -38,4 +44,8 @@ __all__ = [
     "AuditRecord",
     "KillSwitch",
     "ScanState",
+    "IpOwner",
+    "OwnershipResult",
+    "OwnershipVerifier",
+    "Verdict",
 ]
