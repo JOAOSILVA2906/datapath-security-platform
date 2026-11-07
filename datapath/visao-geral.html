@@ -1,0 +1,244 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>DataPath — Visão Geral</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: cabeçalho + 4 tiles de resumo + linha do tempo vertical das 6 fases.
+     Identidade: neutro ardósia, acento azul-petróleo, verde = implementado. */
+  :root {
+    --bg: #eef1f5;
+    --surface: #ffffff;
+    --surface-2: #f6f8fb;
+    --fg: #1b2430;
+    --muted: #5a6778;
+    --line: #dce2ea;
+    --accent: #0d7a74;
+    --ok: #1a7f4b;
+    --ok-bg: #e4f4ea;
+    --plan: #9a6a12;
+    --plan-bg: #f7eed9;
+    --shadow: 0 1px 2px rgba(27,36,48,.06), 0 8px 24px rgba(27,36,48,.06);
+    --font-display: "Sora", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1520; --surface: #182233; --surface-2: #121a27;
+      --fg: #e7edf5; --muted: #9aa8bc; --line: #27344a; --accent: #46b8af;
+      --ok: #5cd291; --ok-bg: #163427; --plan: #e4b45f; --plan-bg: #352a16;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1520; --surface: #182233; --surface-2: #121a27;
+    --fg: #e7edf5; --muted: #9aa8bc; --line: #27344a; --accent: #46b8af;
+    --ok: #5cd291; --ok-bg: #163427; --plan: #e4b45f; --plan-bg: #352a16;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.55; }
+  .wrap {
+    max-width: 800px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 40px 56px;
+  }
+  .eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em;
+             text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 1.1rem + 2.4vw, 2.3rem);
+       margin: 0; letter-spacing: -.02em; text-wrap: balance; }
+  .lede { color: var(--muted); margin: 12px 0 0; max-width: 62ch; }
+
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 26px 0 0; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+          padding: 14px 12px; box-shadow: var(--shadow); }
+  .tile .n { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem;
+             font-variant-numeric: tabular-nums; line-height: 1; color: var(--accent); }
+  .tile .k { color: var(--muted); font-size: .76rem; margin-top: 6px; }
+
+  .section-label { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .14em;
+                   text-transform: uppercase; color: var(--muted); margin: 34px 0 16px; }
+
+  /* Linha do tempo */
+  .timeline { position: relative; display: flex; flex-direction: column; gap: 16px;
+              padding-left: 44px; }
+  .timeline::before { content: ""; position: absolute; left: 17px; top: 8px; bottom: 8px;
+                      width: 2px; background: var(--line); }
+  .phase { position: relative; background: var(--surface); border: 1px solid var(--line);
+           border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px; }
+  .phase .dot { position: absolute; left: -35px; top: 20px; width: 20px; height: 20px;
+                border-radius: 50%; background: var(--ok); border: 3px solid var(--bg);
+                display: flex; align-items: center; justify-content: center;
+                font-family: var(--font-mono); font-size: .62rem; color: #fff; font-weight: 700; }
+  .phase.plan .dot { background: var(--plan); }
+  .phase-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .phase h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; margin: 0;
+              flex: 1; min-width: 0; letter-spacing: -.01em; }
+  .badge { font-family: var(--font-mono); font-size: .66rem; letter-spacing: .05em; padding: 4px 9px;
+           border-radius: 999px; white-space: nowrap; }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.plan { background: var(--plan-bg); color: var(--plan); }
+  .phase p { margin: 10px 0 0; color: var(--muted); font-size: .92rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+  .chip { font-family: var(--font-mono); font-size: .68rem; color: var(--fg);
+          background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+  .run { font-family: var(--font-mono); font-size: .72rem; color: var(--accent); margin: 12px 0 0; }
+
+  .note { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+  .note h4 { font-family: var(--font-display); font-size: .95rem; color: var(--fg); margin: 0 0 8px; }
+  .note code { font-family: var(--font-mono); font-size: .8rem; background: var(--surface-2);
+               border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; color: var(--fg); }
+  .note .cmd { display: block; margin: 6px 0 0; }
+
+  @media (max-width: 560px) { .summary { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">DataPath · plataforma de avaliação de segurança</p>
+    <h1>Visão geral — da autorização ao conserto</h1>
+    <p class="lede">Uma plataforma que só testa sistemas com autorização comprovada,
+      mapeia como a aplicação chega aos dados, confirma o risco com segurança e
+      <b>para no primeiro limite sensível</b> — provando o risco sem causar o dano.
+      Seis fases, construídas do portão para fora.</p>
+  </header>
+
+  <div class="summary">
+    <div class="tile"><div class="n">6</div><div class="k">Fases</div></div>
+    <div class="tile"><div class="n">108</div><div class="k">Testes passando</div></div>
+    <div class="tile"><div class="n">6</div><div class="k">Demonstrações</div></div>
+    <div class="tile"><div class="n">2</div><div class="k">Telas visuais</div></div>
+  </div>
+
+  <p class="section-label">As seis fases</p>
+
+  <div class="timeline">
+
+    <article class="phase">
+      <span class="dot">0</span>
+      <div class="phase-top">
+        <h3>Autorização e segurança (a portaria)</h3>
+        <span class="badge ok">✓ implementada</span>
+      </div>
+      <p>O portão ao qual tudo é subordinado. Nega por padrão e falha fechado:
+        nada roda sem autorização verificada que cubra o alvo e a intensidade.</p>
+      <div class="chips">
+        <span class="chip">escopo versionado</span>
+        <span class="chip">autorização assinada</span>
+        <span class="chip">allow-list / anti-SSRF</span>
+        <span class="chip">política nega-por-padrão</span>
+        <span class="chip">auditoria encadeada</span>
+        <span class="chip">botão de parada</span>
+        <span class="chip">verificação de dono</span>
+        <span class="chip">quatro olhos</span>
+        <span class="chip">cofre de credenciais</span>
+        <span class="chip">rate-limit</span>
+        <span class="chip">vetar templates</span>
+      </div>
+      <p class="run">python -m datapath.demo</p>
+    </article>
+
+    <article class="phase">
+      <span class="dot">1</span>
+      <div class="phase-top">
+        <h3>Recon seguro + detecção + relatório</h3>
+        <span class="badge ok">✓ implementada</span>
+      </div>
+      <p>Mapeia a superfície de forma passiva (só leitura), monta o grafo de
+        caminho-de-dados e detecta configurações inseguras. Toda requisição
+        passa pelo portão. Achados com CVSS, OWASP e correção.</p>
+      <div class="chips">
+        <span class="chip">egress com portão</span>
+        <span class="chip">grafo de caminho-de-dados</span>
+        <span class="chip">detectores passivos</span>
+        <span class="chip">CVSS v3.1</span>
+        <span class="chip">ingestão OpenAPI</span>
+        <span class="chip">relatório JSON</span>
+      </div>
+      <p class="run">python -m datapath.demo_fase1</p>
+    </article>
+
+    <article class="phase">
+      <span class="dot">2</span>
+      <div class="phase-top">
+        <h3>Confirmação ativa (opt-in) com parada no limite</h3>
+        <span class="badge ok">✓ implementada</span>
+      </div>
+      <p>Confirma as falhas de maior valor (BOLA, privilégio vertical) com uma
+        requisição só-leitura contra dados falsos (decoy). O corpo é descartado
+        no portão; captura prova mínima mascarada e para no limite.</p>
+      <div class="chips">
+        <span class="chip">limite sensível</span>
+        <span class="chip">prova mascarada</span>
+        <span class="chip">corpo descartado</span>
+        <span class="chip">não-explorado</span>
+      </div>
+      <p class="run">python -m datapath.demo_fase2</p>
+    </article>
+
+    <article class="phase">
+      <span class="dot">3</span>
+      <div class="phase-top">
+        <h3>Encadeamento de caminhos de ataque</h3>
+        <span class="badge ok">✓ implementada</span>
+      </div>
+      <p>Compõe achados soltos em caminhos realistas até o dado, priorizados por
+        alcançabilidade (não só presença). Ex.: anônimo → enumerar IDs → BOLA →
+        registro de outro tenant.</p>
+      <div class="chips">
+        <span class="chip">capacidades requer/concede</span>
+        <span class="chip">busca e ranqueamento</span>
+        <span class="chip">score por alcançabilidade</span>
+        <span class="chip">narrativa + evidência</span>
+      </div>
+      <p class="run">python -m datapath.demo_fase3</p>
+    </article>
+
+    <article class="phase">
+      <span class="dot">4</span>
+      <div class="phase-top">
+        <h3>Ciclo de correção (o "fix")</h3>
+        <span class="badge ok">✓ implementada</span>
+      </div>
+      <p>Transforma achados em ação: tickets no GitHub/Jira, export SARIF,
+        reteste de um clique com atestado "corrigido" assinado, e painéis de
+        postura ao longo das varreduras.</p>
+      <div class="chips">
+        <span class="chip">tickets GitHub/Jira</span>
+        <span class="chip">export SARIF</span>
+        <span class="chip">atestado assinado</span>
+        <span class="chip">tendência/postura</span>
+        <span class="chip">Slack/webhook</span>
+      </div>
+      <p class="run">python -m datapath.demo_fase4</p>
+    </article>
+
+    <article class="phase plan">
+      <span class="dot">5</span>
+      <div class="phase-top">
+        <h3>Escala e garantia</h3>
+        <span class="badge plan">plano</span>
+      </div>
+      <p>Majoritariamente organizacional: isolamento multi-tenant, pentest da
+        própria plataforma, SOC 2 / ISO 27001 e monitoramento contínuo.
+        Entregue como plano e lista de verificação.</p>
+      <div class="chips">
+        <span class="chip">multi-tenant</span>
+        <span class="chip">pentest da plataforma</span>
+        <span class="chip">SOC 2 / ISO 27001</span>
+        <span class="chip">monitoramento contínuo</span>
+      </div>
+    </article>
+
+  </div>
+
+  <div class="note">
+    <h4>Rodar tudo</h4>
+    <p>Na pasta do projeto:</p>
+    <code class="cmd">python -m unittest discover -s datapath/tests -t . -v</code>
+    <p style="margin-top:12px">Princípio que guia o projeto: <b>nenhuma capacidade de
+      sondagem roda até o portão da Fase 0 estar sólido</b> — e ele está.</p>
+  </div>
+</div>
